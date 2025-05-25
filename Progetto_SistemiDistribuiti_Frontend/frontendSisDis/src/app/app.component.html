@@ -1,0 +1,135 @@
+<div class="container">
+  <h1 class="title">Gestione Pubblicazioni Scientifiche</h1>
+
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab === 'upload'" (click)="activeTab = 'upload'">
+      Carica Documento
+    </button>
+    <button class="tab" [class.active]="activeTab === 'bibtex'" (click)="activeTab = 'bibtex'">
+      Importa BibTeX
+    </button>
+  </div>
+
+  <div *ngIf="showSuccessPopup" class="popup-success">
+    ✅ Documento caricato con successo!
+  </div>
+
+  <section *ngIf="activeTab === 'upload'" class="panel">
+    <form [formGroup]="uploadForm" (ngSubmit)="onUpload()">
+      <div class="form-group">
+        <label for="file">Seleziona un file</label>
+        <input type="file" id="file" #fileInput />
+      </div>
+      <div class="form-group">
+        <input type="text" placeholder="Titolo" formControlName="title" />
+      </div>
+      <div class="form-group">
+        <input type="text" placeholder="Autori" formControlName="authors" />
+      </div>
+      <div class="form-group">
+        <input type="number" placeholder="Anno" formControlName="year" />
+      </div>
+      <div class="form-group">
+        <input type="text" placeholder="Rivista/Conferenza" formControlName="paper" />
+      </div>
+      <button type="submit" class="btn-upload" [disabled]="uploadForm.invalid">
+        Carica Documento
+      </button>
+    </form>
+  </section>
+
+  <section *ngIf="activeTab === 'bibtex'" class="panel">
+    <form [formGroup]="bibtexForm" (ngSubmit)="onImportBibtex()">
+      <div class="form-group">
+        <label for="bibtexFile">File BibTeX (.bib)</label>
+        <input type="file" id="bibtexFile" #bibtexInput accept=".bib" />
+      </div>
+      <div class="form-group">
+        <label for="docFile">Documento originale (PDF, DOCX...)</label>
+        <input type="file" id="docFile" #docFileInput />
+      </div>
+      <button type="submit" class="btn-upload">
+        Importa BibTeX + Documento
+      </button>
+    </form>
+  </section>
+
+  <section class="results-section">
+    <div class="search-container">
+      <input
+        class="search-input"
+        type="text"
+        placeholder="Cerca per titolo, autore, keyword..."
+        (input)="onSearch($event)"
+      />
+    </div>
+
+    <div class="results-header" *ngIf="filteredDocs.length > 0">
+      <h2 class="results-title">Pubblicazioni</h2>
+      <span class="results-count">{{ filteredDocs.length }} documento/i trovato/i</span>
+    </div>
+
+    <div class="documents-grid" *ngIf="filteredDocs.length > 0">
+      <div *ngFor="let doc of filteredDocs" class="doc-card">
+        <div class="doc-header">
+          <h3 class="doc-title">{{ doc.title }}</h3>
+        </div>
+
+        <div class="doc-content">
+          <div class="doc-info">
+            <p class="doc-authors">
+              <strong>Autori:</strong> {{ doc.authors }}
+            </p>
+            <p class="doc-details">
+              <strong>Anno:</strong> {{ doc.year }}
+              <span class="separator">•</span>
+              <strong>Rivista:</strong> {{ doc.paper }}
+            </p>
+          </div>
+
+          <div class="keywords-container" *ngIf="doc.keywords && doc.keywords.length > 0">
+            <div class="keywords-label">Keywords:</div>
+            <div class="keywords-list">
+              <ng-container *ngFor="let kw of doc.keywords; let i = index">
+                <span *ngIf="doc.showAllKeywords || i < 3" class="keyword-badge">
+                  {{ kw }}
+                </span>
+              </ng-container>
+
+              <span *ngIf="!doc.showAllKeywords && doc.keywords.length > 3"
+                    class="more-keywords"
+                    (click)="doc.showAllKeywords = true; $event.stopPropagation();">
+                +{{ doc.keywords.length - 3 }} altre
+              </span>
+
+              <span *ngIf="doc.showAllKeywords && doc.keywords.length > 3"
+                    class="less-keywords"
+                    (click)="doc.showAllKeywords = false; $event.stopPropagation();">
+                Mostra meno
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="doc-actions">
+          <button class="btn-download" (click)="onDownload(doc)">
+            <span class="download-icon">📥</span>
+            Scarica file
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="no-results" *ngIf="filteredDocs.length === 0 && docs.length > 0">
+      <div class="no-results-icon">🔍</div>
+      <h3>Nessun documento trovato</h3>
+      <p>Prova a modificare i termini di ricerca</p>
+    </div>
+
+    <div class="no-documents" *ngIf="docs.length === 0">
+      <div class="no-documents-icon">📄</div>
+      <h3>Nessun documento caricato</h3>
+      <p>Inizia caricando il tuo primo documento o importando un file BibTeX</p>
+    </div>
+  </section>
+</div>
