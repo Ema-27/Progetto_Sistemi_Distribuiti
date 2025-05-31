@@ -5,7 +5,9 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.example.progetto_sistemidistribuiti.model.Document;
 import com.example.progetto_sistemidistribuiti.dto.DocumentDto;
+import com.example.progetto_sistemidistribuiti.model.UserProfile;
 import com.example.progetto_sistemidistribuiti.service.PublicationService;
+import jakarta.annotation.security.RolesAllowed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,10 +18,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.progetto_sistemidistribuiti.service.*;
+
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,16 +37,28 @@ public class PublicationController {
     private static final Logger logger = LoggerFactory.getLogger(PublicationController.class);
 
     private final PublicationService service;
+    private final DocumentParserService parser;
+    private final NLPService nlp;
+    private final RakeKeywordService rakeKeywordService;
+    private final UserService userService;
 
     @Autowired
     private AmazonS3 amazonS3;
 
-    public PublicationController(PublicationService service) {
+    @Autowired
+    public PublicationController(PublicationService service,
+                                 DocumentParserService parser,
+                                 NLPService nlp,
+                                 RakeKeywordService rakeKeywordService,
+                                 UserService userService) {
         this.service = service;
+        this.parser = parser;
+        this.nlp = nlp;
+        this.rakeKeywordService = rakeKeywordService;
+        this.userService = userService;
     }
 
 
-    @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping("/")
     public ResponseEntity<List<Document>> getAllDocuments() {
         List<Document> documents = service.listPublications();
@@ -48,17 +67,28 @@ public class PublicationController {
     }
 
 
+
+
+    @RolesAllowed("user")
     @PostMapping(path = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Document> upload(
             @RequestPart("metadata") DocumentDto dto,
             @RequestPart("file") MultipartFile file,
-            @RequestPart(value = "bibtex", required = false) MultipartFile bibtex
+            @RequestPart(value = "bibtex", required = false) MultipartFile bibtex,
+            @RequestPart String email
     ) throws Exception {
+        // Recupera il profilo utente tramite email
+        UserProfile user = userService.getUserByEmail(email);
+        String nome = user.getFullName(); // O getNome() se il campo si chiama così
+
         dto.setFile(file);
         dto.setBibtex(bibtex);
-        Document saved = service.ingest(dto);
+
+        Document saved = service.ingest(dto, nome, email);
         return ResponseEntity.ok(saved);
     }
+
+
 
     @GetMapping("/search")
     public ResponseEntity<List<Document>> search(@RequestParam String title) {
@@ -131,4 +161,61 @@ public class PublicationController {
         }
         return path;
     }
+
+    @RolesAllowed("user")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletePublication(
+            @PathVariable Integer id,
+            JwtAuthenticationToken token) {
+
+        // Ottieni l'email dell'utente loggato dal JWT
+        String loggedEmail = token.getTokenAttributes().get("email").toString();
+
+        Optional<Document> docOpt = service.searchById(id);
+        if (docOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Document doc = docOpt.get();
+        // Controlla se il documento ha un proprietario e confronta le email
+        if (doc.getOwner() == null || !doc.getOwner().getEmail().equalsIgnoreCase(loggedEmail)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Non puoi eliminare una pubblicazione inserita da un altro utente.");
+        }
+
+        // Elimina da S3 (se serve)
+        if (doc.getFileUrl() != null && !doc.getFileUrl().isEmpty()) {
+            try {
+                String bucket = extractBucket(doc.getFileUrl());
+                String key = extractKey(doc.getFileUrl());
+                amazonS3.deleteObject(bucket, key);
+            } catch (Exception e) {
+                logger.error("Errore durante l'eliminazione da S3: " + e.getMessage());
+            }
+        }
+
+        UserProfile owner = doc.getOwner();
+        if (owner != null) {
+            owner.getDocuments().remove(doc);
+        }
+        service.deleteDocumentById(id);
+
+        return ResponseEntity.ok(Collections.singletonMap("message", "Pubblicazione eliminata."));
+
+
+    }
+
+    @PostMapping("/extract-keywords")
+    public ResponseEntity<List<String>> extractKeywords(
+            @RequestPart("file") MultipartFile file,
+            @RequestParam(value = "useRake", defaultValue = "false") boolean useRake
+    ) throws Exception {
+        String text = parser.extractText(file);
+        List<String> phrases = useRake
+                ? rakeKeywordService.extractKeyPhrases(text, "en")
+                : nlp.extractKeyPhrases(text, "auto");
+        return ResponseEntity.ok(phrases);
+    }
+
+
 }

@@ -21,6 +21,14 @@ public class RakeKeywordService {
 
     private RakeAlgorithm rake;
 
+    private static final List<String> STOP_WORDS = List.of(
+            "the", "and", "a", "an", "of", "to", "in", "for", "on", "with", "at",
+            "by", "from", "up", "about", "into", "over", "after", "beneath", "under",
+            "above", "as", "is", "it", "that", "this", "these", "those", "i", "you",
+            "he", "she", "they", "we", "but", "or", "nor", "so", "yet", "if", "then",
+            "because", "while", "although", "how", "what", "when", "where", "who", "whom"
+    );
+
     @PostConstruct
     public void init() throws IOException {
         String[] stopWords = new SmartWords().getSmartWords();
@@ -51,12 +59,10 @@ public class RakeKeywordService {
 
             return Arrays.stream(result.getFullKeywords())
                     .map(String::trim)
-                    .filter(k -> k.length() > 4)                           // almeno 5 caratteri
-                    .filter(k -> k.split("\\s+").length <= 5)             // massimo 5 parole
-                    .filter(k -> !k.matches(".*\\d.*"))                   // nessun numero
-                    .filter(k -> k.matches(".*[a-zA-Z]{3,}.*"))           // almeno 3 lettere di fila
+                    .filter(this::isKeywordValid)
+                    .filter(this::isNotStopWordsPhrase)  // FILTRO STOP WORDS
                     .distinct()
-                    .limit(15)                                            // massimo 30 keyword
+                    .limit(15)                          // massimo 15 keyword
                     .toList();
         } catch (Exception e) {
             e.printStackTrace();
@@ -70,5 +76,15 @@ public class RakeKeywordService {
         if (k.split("\\s+").length > 5) return false;                    // max 5 parole
         if (k.matches(".*\\d.*")) return false;                          // esclude numeri
         return k.matches(".*[a-zA-Z]{3,}.*");                            // almeno una parola con 3 lettere
+    }
+
+    private boolean isNotStopWordsPhrase(String phrase) {
+        String[] words = phrase.toLowerCase().split("\\s+");
+        for (String w : words) {
+            if (!STOP_WORDS.contains(w)) {
+                return true;  // almeno una parola non è stop word
+            }
+        }
+        return false; // tutte parole sono stop words
     }
 }

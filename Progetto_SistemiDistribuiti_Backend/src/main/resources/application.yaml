@@ -15,9 +15,12 @@ spring:
     show-sql: true
     database-platform: org.hibernate.dialect.MySQL8Dialect
 
-  elasticsearch:
-    rest:
-      uris: ${ELASTIC_URL:http://localhost:9200}
+  security:
+    oauth2:
+       resourceserver:
+          jwt:
+            issuer-uri: https://cognito-idp.${AWS_REGION}.amazonaws.com/${COGNITO_ID}
+
 
 cloud:
   aws:
@@ -28,6 +31,8 @@ cloud:
       static: ${AWS_REGION:eu-north-1}
     s3:
       bucket: ${S3_BUCKET:publications-bucket}
+    cognito:
+      user-pool-id: us-east-1_xrcihwhrv
 
 server:
   compression:

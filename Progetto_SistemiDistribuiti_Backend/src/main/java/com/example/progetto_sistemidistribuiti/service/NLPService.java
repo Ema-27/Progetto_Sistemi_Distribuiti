@@ -26,6 +26,15 @@ public class NLPService {
             "en", "es", "fr", "de", "it", "pt", "ja", "ko", "hi", "ar"
     );
 
+    // Lista semplice di stop words in inglese, puoi ampliarla o adattarla
+    private static final Set<String> STOP_WORDS = Set.of(
+            "the", "and", "a", "an", "of", "to", "in", "for", "on", "with", "at",
+            "by", "from", "up", "about", "into", "over", "after", "beneath", "under",
+            "above", "as", "is", "it", "that", "this", "these", "those", "i", "you",
+            "he", "she", "they", "we", "but", "or", "nor", "so", "yet", "if", "then",
+            "because", "while", "although", "how", "what", "when", "where", "who", "whom"
+    );
+
     public NLPService(AmazonComprehend comprehend) {
         this.comprehend = comprehend;
     }
@@ -54,7 +63,7 @@ public class NLPService {
 
         DetectKeyPhrasesRequest request = new DetectKeyPhrasesRequest()
                 .withText(inputText)
-                .withLanguageCode(languageCode);
+                .withLanguageCode(langCode);
 
         DetectKeyPhrasesResult result = comprehend.detectKeyPhrases(request);
 
@@ -66,10 +75,24 @@ public class NLPService {
                 .filter(phrase -> phrase.split("\\s+").length <= 6) // max 6 parole
                 .filter(phrase -> phrase.matches(".*[a-zA-Z]{3,}.*")) // deve contenere parole significative
                 .filter(phrase -> !phrase.matches(".*\\d.*")) // esclude numeri puri
+                .filter(this::isNotStopWordsPhrase) // filtro stop words
                 .distinct()
                 .limit(20) // opzionale: limita a 20 keyword
                 .collect(Collectors.toList());
     }
+
+    private boolean isNotStopWordsPhrase(String phrase) {
+        // splitto in parole minuscole
+        String[] words = phrase.toLowerCase(Locale.ROOT).split("\\s+");
+        // considero stop words se tutte le parole sono stop words
+        for (String w : words) {
+            if (!STOP_WORDS.contains(w)) {
+                return true; // almeno una parola non è stop word
+            }
+        }
+        return false; // tutte parole sono stop words
+    }
+
     private String detectLanguage(String text) {
         DetectDominantLanguageRequest request = new DetectDominantLanguageRequest().withText(text);
         DetectDominantLanguageResult result = comprehend.detectDominantLanguage(request);

@@ -1,5 +1,7 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -19,10 +21,9 @@
 		<java.version>17</java.version>
 	</properties>
 
-
-
 	<dependencies>
-		<!-- Spring Boot essentials -->
+
+		<!-- Spring Boot core -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
@@ -62,39 +63,52 @@
 			<version>1.0.19</version>
 		</dependency>
 
-		<!-- AWS S3-->
+		<!-- AWS SDK (S3 + Comprehend) -->
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk-s3</artifactId>
 			<version>1.12.683</version>
 		</dependency>
-
-		<!-- ELASTICH SEARCH-->
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-java-sdk-comprehend</artifactId>
+			<version>1.12.683</version>
 		</dependency>
 
+		<!-- AWS SDK v2 (Cognito) -->
 		<dependency>
-			<groupId>org.opensearch.client</groupId>
-			<artifactId>opensearch-rest-high-level-client</artifactId>
-			<version>2.11.0</version>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>cognitoidentityprovider</artifactId>
+			<version>2.20.148</version>
 		</dependency>
-
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>auth</artifactId>
 			<version>2.20.0</version>
 		</dependency>
 
+		<!-- Elasticsearch -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.opensearch.client</groupId>
+			<artifactId>opensearch-rest-high-level-client</artifactId>
+			<version>2.11.0</version>
+		</dependency>
 		<dependency>
 			<groupId>org.opensearch.client</groupId>
 			<artifactId>opensearch-java</artifactId>
 			<version>2.11.0</version>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-elasticsearch</artifactId>
+			<version>5.4.5</version>
+		</dependency>
 
-
-		<!-- Apache Tika -->
+		<!-- Apache Tika + PDFBox + POI -->
 		<dependency>
 			<groupId>org.apache.tika</groupId>
 			<artifactId>tika-parsers-standard-package</artifactId>
@@ -105,47 +119,46 @@
 			<artifactId>tika-core</artifactId>
 			<version>2.9.0</version>
 		</dependency>
-
-		<!-- Apache PDFBOX -->
 		<dependency>
 			<groupId>org.apache.pdfbox</groupId>
 			<artifactId>pdfbox</artifactId>
 			<version>2.0.29</version>
 		</dependency>
-
-		<!-- Apache POI -->
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
 			<version>5.2.5</version>
 		</dependency>
 
-		<!-- COMPREHEND  -->
-		<dependency>
-			<groupId>com.amazonaws</groupId>
-			<artifactId>aws-java-sdk-comprehend</artifactId>
-			<version>1.12.683</version>
-		</dependency>
-
-		<!-- RAKE  -->
+		<!-- RAKE -->
 		<dependency>
 			<groupId>io.github.crew102</groupId>
 			<artifactId>rapidrake</artifactId>
 			<version>0.1.5</version>
 		</dependency>
 
-
-		<!-- IndexCoordinates -->
+		<!-- Spring Security + JWT -->
 		<dependency>
-			<groupId>org.springframework.data</groupId>
-			<artifactId>spring-data-elasticsearch</artifactId>
-			<version>5.4.5</version>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-oauth2-jose</artifactId>
 		</dependency>
 
+		<!-- @RolesAllowed -->
+		<dependency>
+			<groupId>jakarta.annotation</groupId>
+			<artifactId>jakarta.annotation-api</artifactId>
+			<version>2.1.1</version>
+		</dependency>
 
-
-
-		<!-- Testing -->
+		<!-- Test -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -156,7 +169,7 @@
 
 	<build>
 		<plugins>
-			<!-- Compiler plugin with annotation processor for Lombok -->
+			<!-- Lombok annotation processor -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>

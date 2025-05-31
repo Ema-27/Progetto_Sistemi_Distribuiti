@@ -9,8 +9,6 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.util.List;
-import java.util.UUID;
-
 @Getter
 @Setter
 @EqualsAndHashCode
@@ -49,5 +47,10 @@ public class Document {
     @CollectionTable(name = "document_keywords", joinColumns = @JoinColumn(name = "document_id"))
     @Column(name = "keyword")
     private List<String> keywords;
+
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private UserProfile owner;
 
 }

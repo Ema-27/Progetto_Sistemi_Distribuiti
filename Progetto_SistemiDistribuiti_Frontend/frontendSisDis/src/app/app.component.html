@@ -1,135 +1,428 @@
-<div class="container">
-  <h1 class="title">Gestione Pubblicazioni Scientifiche</h1>
-
-  <div class="tabs">
-    <button class="tab" [class.active]="activeTab === 'upload'" (click)="activeTab = 'upload'">
-      Carica Documento
-    </button>
-    <button class="tab" [class.active]="activeTab === 'bibtex'" (click)="activeTab = 'bibtex'">
-      Importa BibTeX
-    </button>
-  </div>
-
-  <div *ngIf="showSuccessPopup" class="popup-success">
-    ✅ Documento caricato con successo!
-  </div>
-
-  <section *ngIf="activeTab === 'upload'" class="panel">
-    <form [formGroup]="uploadForm" (ngSubmit)="onUpload()">
-      <div class="form-group">
-        <label for="file">Seleziona un file</label>
-        <input type="file" id="file" #fileInput />
-      </div>
-      <div class="form-group">
-        <input type="text" placeholder="Titolo" formControlName="title" />
-      </div>
-      <div class="form-group">
-        <input type="text" placeholder="Autori" formControlName="authors" />
-      </div>
-      <div class="form-group">
-        <input type="number" placeholder="Anno" formControlName="year" />
-      </div>
-      <div class="form-group">
-        <input type="text" placeholder="Rivista/Conferenza" formControlName="paper" />
-      </div>
-      <button type="submit" class="btn-upload" [disabled]="uploadForm.invalid">
-        Carica Documento
-      </button>
-    </form>
-  </section>
-
-  <section *ngIf="activeTab === 'bibtex'" class="panel">
-    <form [formGroup]="bibtexForm" (ngSubmit)="onImportBibtex()">
-      <div class="form-group">
-        <label for="bibtexFile">File BibTeX (.bib)</label>
-        <input type="file" id="bibtexFile" #bibtexInput accept=".bib" />
-      </div>
-      <div class="form-group">
-        <label for="docFile">Documento originale (PDF, DOCX...)</label>
-        <input type="file" id="docFile" #docFileInput />
-      </div>
-      <button type="submit" class="btn-upload">
-        Importa BibTeX + Documento
-      </button>
-    </form>
-  </section>
-
-  <section class="results-section">
-    <div class="search-container">
-      <input
-        class="search-input"
-        type="text"
-        placeholder="Cerca per titolo, autore, keyword..."
-        (input)="onSearch($event)"
-      />
-    </div>
-
-    <div class="results-header" *ngIf="filteredDocs.length > 0">
-      <h2 class="results-title">Pubblicazioni</h2>
-      <span class="results-count">{{ filteredDocs.length }} documento/i trovato/i</span>
-    </div>
-
-    <div class="documents-grid" *ngIf="filteredDocs.length > 0">
-      <div *ngFor="let doc of filteredDocs" class="doc-card">
-        <div class="doc-header">
-          <h3 class="doc-title">{{ doc.title }}</h3>
+<!-- AUTH BAR -->
+<div class="auth-bar">
+    <div class="auth-container">
+        <div class="auth-logo">
+            📚 PubliSci
         </div>
-
-        <div class="doc-content">
-          <div class="doc-info">
-            <p class="doc-authors">
-              <strong>Autori:</strong> {{ doc.authors }}
-            </p>
-            <p class="doc-details">
-              <strong>Anno:</strong> {{ doc.year }}
-              <span class="separator">•</span>
-              <strong>Rivista:</strong> {{ doc.paper }}
-            </p>
-          </div>
-
-          <div class="keywords-container" *ngIf="doc.keywords && doc.keywords.length > 0">
-            <div class="keywords-label">Keywords:</div>
-            <div class="keywords-list">
-              <ng-container *ngFor="let kw of doc.keywords; let i = index">
-                <span *ngIf="doc.showAllKeywords || i < 3" class="keyword-badge">
-                  {{ kw }}
-                </span>
-              </ng-container>
-
-              <span *ngIf="!doc.showAllKeywords && doc.keywords.length > 3"
-                    class="more-keywords"
-                    (click)="doc.showAllKeywords = true; $event.stopPropagation();">
-                +{{ doc.keywords.length - 3 }} altre
-              </span>
-
-              <span *ngIf="doc.showAllKeywords && doc.keywords.length > 3"
-                    class="less-keywords"
-                    (click)="doc.showAllKeywords = false; $event.stopPropagation();">
-                Mostra meno
-              </span>
+        <div class="auth-actions">
+            <div id="authStatus" class="auth-status" [class.logged-in]="isAuthenticated">
+                <div class="auth-status-icon"></div>
+                <span *ngIf="!isAuthenticated">Non autenticato</span>
+                <span *ngIf="isAuthenticated">Autenticato</span>
             </div>
-          </div>
+            <div id="authButtons" *ngIf="!isAuthenticated">
+                <button class="btn-auth" (click)="openAuthModal('login')">Accedi</button>
+                <button class="btn-auth primary" (click)="openAuthModal('register')">Registrati</button>
+            </div>
+            <div id="userInfo" class="auth-user-info" *ngIf="isAuthenticated">
+                <div class="user-dropdown-container">
+                    <div class="auth-avatar" id="userAvatar" (click)="toggleUserDropdown()">
+                        {{ getUserInitial() }}
+                    </div>
+                    <span id="userName">{{ userName }}</span>
+
+                    <!-- Dropdown delle pubblicazioni utente -->
+                    <div class="user-dropdown" [class.show]="showUserDropdown" (click)="$event.stopPropagation()">
+                        <div class="user-dropdown-header">
+                            <h4>Le mie pubblicazioni</h4>
+                            <span class="close-dropdown" (click)="closeUserDropdown()">×</span>
+                        </div>
+
+                        <div class="user-dropdown-content">
+                            <div *ngIf="loadingMyDocs" class="loading-docs">
+                                Caricamento...
+                            </div>
+
+                            <div *ngIf="!loadingMyDocs && myDocs.length === 0" class="no-user-docs">
+                                <div class="no-docs-icon">📄</div>
+                                <p>Non hai ancora pubblicazioni</p>
+                            </div>
+
+                            <div *ngIf="!loadingMyDocs && myDocs.length > 0" class="user-docs-list">
+                                <div class="user-doc-item" *ngFor="let doc of myDocs">
+                                    <div class="user-doc-info">
+                                        <h5 class="user-doc-title">{{ doc.title }}</h5>
+                                        <p class="user-doc-meta">{{ doc.authors }} • {{ doc.year }}</p>
+                                        <div class="user-doc-keywords" *ngIf="doc.keywords?.length">
+                                            <span class="user-keyword" *ngFor="let kw of doc.keywords.slice(0, 2)">{{ kw }}</span>
+                                            <span *ngIf="doc.keywords.length > 2" class="more-keywords-count">+{{ doc.keywords.length - 2 }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="user-doc-actions">
+                                        <button class="btn-delete-doc" (click)="deleteMyDoc(doc.id)" title="Elimina pubblicazione">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="user-dropdown-footer">
+                            <button class="btn-logout" (click)="logout()">Esci</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+    </div>
+</div>
 
-        <div class="doc-actions">
-          <button class="btn-download" (click)="onDownload(doc)">
-            <span class="download-icon">📥</span>
-            Scarica file
-          </button>
+<!-- AUTH MODAL -->
+<div id="authModal" class="auth-modal" [class.show]="showAuthModalFlag">
+    <div class="auth-modal-content">
+        <button class="auth-close" (click)="closeAuthModal()">×</button>
+        <div class="auth-modal-header">
+            <h2 class="auth-modal-title">{{ authMode === 'login' ? 'Accedi' : 'Registrati' }}</h2>
+            <p class="auth-modal-subtitle">
+                {{ authMode === 'login' ? 'Accedi per caricare e gestire le tue pubblicazioni' : 'Crea un nuovo account per PubliSci' }}
+            </p>
         </div>
-      </div>
+        <form class="auth-form" (ngSubmit)="handleAuth()">
+            <div *ngIf="authMode === 'register'" class="auth-form-group">
+                <label for="name">Nome completo</label>
+                <input type="text" id="name" [(ngModel)]="authName" name="name" placeholder="Inserisci il tuo nome completo" required />
+            </div>
+            <div class="auth-form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" [(ngModel)]="authEmail" name="email" placeholder="Inserisci la tua email" required />
+            </div>
+            <div class="auth-form-group">
+                <label for="password">Password</label>
+                <input
+                  type="password"
+                  id="password"
+                  [(ngModel)]="authPassword"
+                  name="password"
+                  placeholder="Inserisci la tua password"
+                  required
+                  (input)="onPasswordChange()"
+                />
+                <!-- Qui mostra i requisiti password solo in registrazione -->
+                <div *ngIf="authMode === 'register' && showPasswordRequirements" class="password-requirements">
+                    <p [class.valid]="passwordRequirements.minLength">• Almeno 8 caratteri</p>
+                    <p [class.valid]="passwordRequirements.hasUppercase">• Almeno una lettera maiuscola</p>
+                    <p [class.valid]="passwordRequirements.hasNumber">• Almeno un numero</p>
+                    <p [class.valid]="passwordRequirements.hasSpecialChar">• Almeno un carattere speciale (_ - . : , ;)</p>
+                </div>
+            </div>
+            <div class="auth-form-actions">
+                <button type="submit" class="btn-auth primary">
+                    {{ authMode === 'login' ? 'Accedi' : 'Registrati' }}
+                </button>
+            </div>
+        </form>
+        <div class="auth-switch">
+            <span>{{ authMode === 'login' ? 'Non hai un account?' : 'Hai già un account?' }}</span>
+            <button type="button" (click)="toggleAuthMode()">
+                {{ authMode === 'login' ? 'Registrati' : 'Accedi' }}
+            </button>
+        </div>
+        <div *ngIf="authError" class="auth-error">{{ authError }}</div>
+    </div>
+</div>
+
+<div class="container">
+    <h1 class="title">Gestione Pubblicazioni Scientifiche</h1>
+    <div class="tabs">
+        <button id="uploadTab" class="tab" [class.active]="activeTab === 'upload'" (click)="setActiveTab('upload')">
+            Carica Documento
+        </button>
+        <button id="bibtexTab" class="tab" [class.active]="activeTab === 'bibtex'" (click)="setActiveTab('bibtex')">
+            Importa BibTeX
+        </button>
     </div>
 
-    <div class="no-results" *ngIf="filteredDocs.length === 0 && docs.length > 0">
-      <div class="no-results-icon">🔍</div>
-      <h3>Nessun documento trovato</h3>
-      <p>Prova a modificare i termini di ricerca</p>
+    <div *ngIf="showSuccessPopup" class="popup-success">
+        ✅ Documento caricato con successo!
     </div>
 
-    <div class="no-documents" *ngIf="docs.length === 0">
-      <div class="no-documents-icon">📄</div>
-      <h3>Nessun documento caricato</h3>
-      <p>Inizia caricando il tuo primo documento o importando un file BibTeX</p>
+    <div *ngIf="showDeleteSuccessPopup" class="popup-success">
+        ✅ Pubblicazione eliminata con successo!
     </div>
-  </section>
+
+    <!-- Popup di errore -->
+    <div *ngIf="showErrorPopup" class="popup-error">
+        ❌ {{ errorMessage }}
+    </div>
+
+    <!-- Popup di conferma eliminazione -->
+    <div *ngIf="showDeleteConfirmPopup" class="popup-confirm-overlay">
+        <div class="popup-confirm">
+            <div class="popup-confirm-icon">⚠️</div>
+            <h3 class="popup-confirm-title">Conferma eliminazione</h3>
+            <p class="popup-confirm-text">
+                Sei sicuro di voler eliminare la pubblicazione<br />
+                <strong>"{{ docToDelete?.title }}"</strong>?
+            </p>
+            <div class="popup-confirm-actions">
+                <button class="btn-confirm-cancel" (click)="cancelDelete()">Annulla</button>
+                <button class="btn-confirm-delete" (click)="confirmDelete()">Elimina</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Panel -->
+    <section id="uploadPanel" class="panel" *ngIf="activeTab === 'upload'">
+        <div id="uploadOverlay" class="login-required-overlay" *ngIf="!isAuthenticated">
+            <div class="login-required-icon">🔒</div>
+            <h3 class="login-required-title">Accesso richiesto</h3>
+            <p class="login-required-text">Devi effettuare l'accesso per caricare documenti</p>
+            <button class="btn-auth primary" (click)="openAuthModal('login')">Accedi ora</button>
+        </div>
+        <form id="uploadForm" [formGroup]="uploadForm" (ngSubmit)="onUpload()" *ngIf="isAuthenticated">
+            <div class="form-group">
+                <label for="file">Seleziona un file</label>
+                <input type="file" id="file" #fileInput required (change)="onFileSelected($event)" />
+            </div>
+            
+            <!-- NUOVO: Selettore tecnologia estrazione keyword -->
+            <div class="keyword-extraction-selector">
+                <label class="selector-label">Tecnologia estrazione keyword:</label>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" 
+                               name="keywordTech" 
+                               [value]="false" 
+                               [(ngModel)]="useRake"
+                               [ngModelOptions]="{ standalone: true }">
+                        <span class="radio-custom"></span>
+                        <div class="radio-content">
+                            <span class="radio-title">AWS Comprehend</span>
+                            <span class="radio-description">Servizio cloud di AWS per NLP avanzato</span>
+                        </div>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" 
+                               name="keywordTech" 
+                               [value]="true" 
+                               [(ngModel)]="useRake"
+                               [ngModelOptions]="{ standalone: true }">
+                        <span class="radio-custom"></span>
+                        <div class="radio-content">
+                            <span class="radio-title">RAKE</span>
+                            <span class="radio-description">Rapid Automatic Keyword Extraction (locale)</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <input type="text" formControlName="title" placeholder="Titolo" required />
+            </div>
+            <div class="form-group">
+                <input type="text" formControlName="authors" placeholder="Autori" required />
+            </div>
+            <div class="form-group">
+                <input type="number" formControlName="year" placeholder="Anno" required />
+            </div>
+            <div class="form-group">
+                <input type="text" formControlName="paper" placeholder="Rivista/Conferenza" required />
+            </div>
+
+            <!-- KEYWORD PANEL (UPLOAD) -->
+            <div *ngIf="isExtractingKeywords" class="keywords-progress">Estrazione keyword in corso...</div>
+            <div *ngIf="keywordError" class="keywords-error">{{ keywordError }}</div>
+
+            <div class="keyword-panel" *ngIf="showKeywordPanel">
+                <h4>Seleziona le keyword rilevanti:</h4>
+                <div class="current-tech-info">
+                    <span class="tech-badge" [class.comprehend]="!useRake" [class.rake]="useRake">
+                        {{ useRake ? 'RAKE' : 'AWS Comprehend' }}
+                    </span>
+                </div>
+                <div class="keyword-list">
+                    <span
+                        *ngFor="let kw of extractedKeywords"
+                        class="keyword-chip"
+                        [class.selected]="selectedKeywords.has(kw)"
+                        (click)="toggleKeyword(kw)"
+                    >
+                        {{ kw }}
+                        <span
+                            class="remove-btn"
+                            *ngIf="selectedKeywords.has(kw)"
+                            (click)="removeKeyword(kw); $event.stopPropagation();"
+                            >✕</span
+                        >
+                    </span>
+                </div>
+                <div class="add-keyword">
+                    <input
+                        [(ngModel)]="newKeyword"
+                        name="addKeyword"
+                        placeholder="Aggiungi nuova keyword"
+                        [ngModelOptions]="{ standalone: true }"
+                        (keydown.enter)="addKeyword(); $event.preventDefault();"
+                    />
+                    <button type="button" (click)="addKeyword()">Aggiungi</button>
+                </div>
+                <div class="selected-keywords">
+                    <strong>Selezionate:</strong>
+                    <span *ngFor="let k of selectedKeywords">{{ k }} </span>
+                    <span *ngIf="selectedKeywords.size === 0">Nessuna</span>
+                </div>
+            </div>
+            <!-- FINE KEYWORD PANEL -->
+
+            <button type="submit" class="btn-upload" [disabled]="uploadForm.invalid || selectedKeywords.size === 0">
+                Carica Documento
+            </button>
+        </form>
+    </section>
+
+    <!-- BibTeX Panel -->
+    <section id="bibtexPanel" class="panel" *ngIf="activeTab === 'bibtex'">
+        <div id="bibtexOverlay" class="login-required-overlay" *ngIf="!isAuthenticated">
+            <div class="login-required-icon">🔒</div>
+            <h3 class="login-required-title">Accesso richiesto</h3>
+            <p class="login-required-text">Devi effettuare l'accesso per importare file BibTeX</p>
+            <button class="btn-auth primary" (click)="openAuthModal('login')">Accedi ora</button>
+        </div>
+        <form id="bibtexForm" (ngSubmit)="onImportBibtex()" *ngIf="isAuthenticated">
+            <div class="form-group">
+                <label for="bibtexFile">File BibTeX (.bib)</label>
+                <input type="file" id="bibtexFile" #bibtexInput accept=".bib" required />
+            </div>
+            <div class="form-group">
+                <label for="docFile">Documento originale (PDF, DOCX...)</label>
+                <input type="file" id="docFile" #docFileInput required (change)="onBibtexDocFileSelected($event)" />
+            </div>
+            
+            <!-- NUOVO: Selettore tecnologia estrazione keyword per BibTeX -->
+            <div class="keyword-extraction-selector">
+                <label class="selector-label">Tecnologia estrazione keyword:</label>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" 
+                               name="keywordTechBibtex" 
+                               [value]="false" 
+                               [(ngModel)]="useRakeBibtex"
+                               [ngModelOptions]="{ standalone: true }">
+                        <span class="radio-custom"></span>
+                        <div class="radio-content">
+                            <span class="radio-title">AWS Comprehend</span>
+                            <span class="radio-description">Servizio cloud di AWS per NLP avanzato</span>
+                        </div>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" 
+                               name="keywordTechBibtex" 
+                               [value]="true" 
+                               [(ngModel)]="useRakeBibtex"
+                               [ngModelOptions]="{ standalone: true }">
+                        <span class="radio-custom"></span>
+                        <div class="radio-content">
+                            <span class="radio-title">RAKE</span>
+                            <span class="radio-description">Rapid Automatic Keyword Extraction (locale)</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- KEYWORD PANEL (BIBTEX) -->
+            <div *ngIf="isExtractingBibtexKeywords" class="keywords-progress">Estrazione keyword in corso...</div>
+            <div *ngIf="bibtexKeywordError" class="keywords-error">{{ bibtexKeywordError }}</div>
+            <div class="keyword-panel" *ngIf="showBibtexKeywordPanel">
+                <h4>Seleziona le keyword rilevanti:</h4>
+                <div class="current-tech-info">
+                    <span class="tech-badge" [class.comprehend]="!useRakeBibtex" [class.rake]="useRakeBibtex">
+                        {{ useRakeBibtex ? 'RAKE' : 'AWS Comprehend' }}
+                    </span>
+                </div>
+                <div class="keyword-list">
+                    <span
+                        *ngFor="let kw of extractedBibtexKeywords"
+                        class="keyword-chip"
+                        [class.selected]="selectedBibtexKeywords.has(kw)"
+                        (click)="toggleBibtexKeyword(kw)"
+                    >
+                        {{ kw }}
+                        <span
+                            class="remove-btn"
+                            *ngIf="selectedBibtexKeywords.has(kw)"
+                            (click)="removeBibtexKeyword(kw); $event.stopPropagation();"
+                            >✕</span
+                        >
+                    </span>
+                </div>
+                <div class="add-keyword">
+                    <input
+                        [(ngModel)]="newBibtexKeyword"
+                        name="addBibtexKeyword"
+                        placeholder="Aggiungi nuova keyword"
+                        [ngModelOptions]="{ standalone: true }"
+                        (keydown.enter)="addBibtexKeyword(); $event.preventDefault();"
+                    />
+                    <button type="button" (click)="addBibtexKeyword()">Aggiungi</button>
+                </div>
+                <div class="selected-keywords">
+                    <strong>Selezionate:</strong>
+                    <span *ngFor="let k of selectedBibtexKeywords">{{ k }} </span>
+                    <span *ngIf="selectedBibtexKeywords.size === 0">Nessuna</span>
+                </div>
+            </div>
+            <!-- FINE KEYWORD PANEL -->
+            <button type="submit" class="btn-upload" [disabled]="selectedBibtexKeywords.size === 0">
+                Importa BibTeX + Documento
+            </button>
+        </form>
+    </section>
+
+    <section class="results-section">
+        <div class="search-container">
+            <input
+                class="search-input"
+                type="text"
+                placeholder="Cerca per titolo, autore, keyword..."
+                (input)="onSearch($event)"
+            />
+        </div>
+        <div class="results-header" *ngIf="filteredDocs.length > 0">
+            <h2 class="results-title">Pubblicazioni</h2>
+            <span class="results-count">{{ filteredDocs.length }} documento/i trovato/i</span>
+        </div>
+        <div class="documents-grid" *ngIf="filteredDocs.length > 0">
+            <div class="doc-card" *ngFor="let doc of filteredDocs">
+                <div class="doc-header">
+                    <h3 class="doc-title">{{ doc.title }}</h3>
+                </div>
+                <div class="doc-content">
+                    <div class="doc-info">
+                        <p class="doc-authors"><strong>Autori:</strong> {{ doc.authors }}</p>
+                        <p class="doc-details">
+                            <strong>Anno:</strong> {{ doc.year }} <span class="separator">•</span>
+                            <strong>Rivista:</strong> {{ doc.paper }}
+                        </p>
+                    </div>
+                    <div class="keywords-container" *ngIf="doc.keywords?.length">
+                        <div class="keywords-label">Keywords:</div>
+                        <div class="keywords-list">
+                            <ng-container *ngFor="let kw of getVisibleKeywords(doc)">
+                                <span class="keyword-badge">{{ kw }}</span>
+                            </ng-container>
+                            <span class="more-keywords" *ngIf="showMoreKeywordsButton(doc)" (click)="toggleKeywords(doc)">
+                                {{ doc.showAllKeywords ? '− Nascondi' : '+' + (doc.keywords.length - 3) + ' altre' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="doc-actions">
+                    <button class="btn-download" (click)="onDownload(doc)">
+                        <span class="download-icon">📥</span>
+                        Scarica file
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="no-results" *ngIf="filteredDocs.length === 0 && docs.length > 0">
+            <div class="no-results-icon">🔍</div>
+            <h3>Nessun documento trovato</h3>
+            <p>Prova a modificare i termini di ricerca</p>
+        </div>
+        <div class="no-documents" *ngIf="docs.length === 0">
+            <div class="no-documents-icon">📄</div>
+            <h3>Nessun documento caricato</h3>
+            <p>Inizia caricando il tuo primo documento o importando un file BibTeX</p>
+        </div>
+    </section>
 </div>
