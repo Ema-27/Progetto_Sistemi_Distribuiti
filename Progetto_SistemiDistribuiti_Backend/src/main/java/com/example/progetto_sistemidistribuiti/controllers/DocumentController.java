@@ -32,9 +32,9 @@ public class DocumentController {
             documentDto.setFile(file);
             documentDto.setBibtex(bibtex);
 
-            // Dati dal token Keycloak
-            String userId = token.getToken().getSubject(); // UUID Keycloak (sub)
-            String fullName = token.getToken().getClaimAsString("name"); // nome utente (se configurato)
+
+            String userId = token.getToken().getSubject();
+            String fullName = token.getToken().getClaimAsString("name");
 
             documentService.saveDocument(documentDto, userId, fullName);
 

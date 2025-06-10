@@ -4,7 +4,6 @@ import com.example.progetto_sistemidistribuiti.dto.UserProfileDto;
 import com.example.progetto_sistemidistribuiti.model.UserProfile;
 import com.example.progetto_sistemidistribuiti.service.UserService;
 import com.example.progetto_sistemidistribuiti.support.InvalidCredentialsException;
-import com.example.progetto_sistemidistribuiti.support.MailUserAlreadyExistsException;
 import com.example.progetto_sistemidistribuiti.support.UserNotFoundException;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;

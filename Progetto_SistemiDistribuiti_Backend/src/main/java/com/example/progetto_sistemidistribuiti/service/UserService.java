@@ -144,7 +144,6 @@ public class UserService {
 
              return response.authenticationResult().idToken();
 
-
         } catch (NotAuthorizedException e) {
             throw new InvalidCredentialsException("Email o password non corretti", e);
         } catch (UserNotConfirmedException e) {

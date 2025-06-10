@@ -2,7 +2,7 @@
 <div class="auth-bar">
     <div class="auth-container">
         <div class="auth-logo">
-            📚 PubliSci
+            📚 PubliSisDis
         </div>
         <div class="auth-actions">
             <div id="authStatus" class="auth-status" [class.logged-in]="isAuthenticated">
@@ -175,7 +175,7 @@
                 <input type="file" id="file" #fileInput required (change)="onFileSelected($event)" />
             </div>
             
-            <!-- NUOVO: Selettore tecnologia estrazione keyword -->
+            <!--  Selettore tecnologia estrazione keyword -->
             <div class="keyword-extraction-selector">
                 <label class="selector-label">Tecnologia estrazione keyword:</label>
                 <div class="radio-group">
@@ -262,7 +262,7 @@
                     <span *ngIf="selectedKeywords.size === 0">Nessuna</span>
                 </div>
             </div>
-            <!-- FINE KEYWORD PANEL -->
+            
 
             <button type="submit" class="btn-upload" [disabled]="uploadForm.invalid || selectedKeywords.size === 0">
                 Carica Documento
@@ -288,7 +288,7 @@
                 <input type="file" id="docFile" #docFileInput required (change)="onBibtexDocFileSelected($event)" />
             </div>
             
-            <!-- NUOVO: Selettore tecnologia estrazione keyword per BibTeX -->
+            <!--  Selettore tecnologia estrazione keyword per BibTeX -->
             <div class="keyword-extraction-selector">
                 <label class="selector-label">Tecnologia estrazione keyword:</label>
                 <div class="radio-group">
@@ -361,7 +361,6 @@
                     <span *ngIf="selectedBibtexKeywords.size === 0">Nessuna</span>
                 </div>
             </div>
-            <!-- FINE KEYWORD PANEL -->
             <button type="submit" class="btn-upload" [disabled]="selectedBibtexKeywords.size === 0">
                 Importa BibTeX + Documento
             </button>

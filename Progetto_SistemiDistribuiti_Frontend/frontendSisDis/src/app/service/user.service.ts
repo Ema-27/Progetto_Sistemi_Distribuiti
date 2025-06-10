@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
 export interface RegisterUserDto {
   username: string;
@@ -11,7 +12,7 @@ export interface RegisterUserDto {
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
-  private baseUrl = 'http://localhost:8080/api/users'; // Cambia se il tuo backend è su altra porta
+  private baseUrl = 'http://'+environment.host+':8080/api/users'; 
 
   constructor(private http: HttpClient) {}
 

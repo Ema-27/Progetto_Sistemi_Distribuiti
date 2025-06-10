@@ -8,10 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class PublicationService {
@@ -58,15 +56,13 @@ public class PublicationService {
             doc.setPaper(dto.getPaper());
         }
 
-        // Carica il file e salva la URL in S3
         String url = storage.upload(dto.getFile());
         doc.setFileUrl(url);
 
-        // 1. Se le keyword sono fornite dal frontend (selezionate/modificate dall’utente), usale direttamente
         if (dto.getKeywords() != null && !dto.getKeywords().isEmpty()) {
             doc.setKeywords(dto.getKeywords());
         } else {
-            // 2. Se NON sono state fornite dal frontend, estrai dal testo
+
             String text = parser.extractText(dto.getFile());
             List<String> phrases = dto.isUseRake()
                     ? rakeKeywordService.extractKeyPhrases(text, "en")
@@ -74,12 +70,10 @@ public class PublicationService {
             doc.setKeywords(phrases);
         }
 
-        // Recupera l’utente proprietario dal repository tramite email
         UserProfile user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utente non trovato"));
         doc.setOwner(user);
 
-        // Salva e restituisci il documento
         return repo.save(doc);
     }
 

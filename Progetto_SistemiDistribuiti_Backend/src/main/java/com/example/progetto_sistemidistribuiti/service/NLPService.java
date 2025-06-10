@@ -2,18 +2,8 @@ package com.example.progetto_sistemidistribuiti.service;
 
 import com.amazonaws.services.comprehend.AmazonComprehend;
 import com.amazonaws.services.comprehend.model.*;
-import io.github.crew102.rapidrake.RakeAlgorithm;
-import io.github.crew102.rapidrake.data.SmartWords;
-import io.github.crew102.rapidrake.model.RakeParams;
-import io.github.crew102.rapidrake.model.Result;
-import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,7 +16,7 @@ public class NLPService {
             "en", "es", "fr", "de", "it", "pt", "ja", "ko", "hi", "ar"
     );
 
-    // Lista semplice di stop words in inglese, puoi ampliarla o adattarla
+    // Lista semplice di stop words in inglese
     private static final Set<String> STOP_WORDS = Set.of(
             "the", "and", "a", "an", "of", "to", "in", "for", "on", "with", "at",
             "by", "from", "up", "about", "into", "over", "after", "beneath", "under",
@@ -77,7 +67,7 @@ public class NLPService {
                 .filter(phrase -> !phrase.matches(".*\\d.*")) // esclude numeri puri
                 .filter(this::isNotStopWordsPhrase) // filtro stop words
                 .distinct()
-                .limit(20) // opzionale: limita a 20 keyword
+                .limit(5)
                 .collect(Collectors.toList());
     }
 

@@ -160,14 +160,14 @@ export class AppComponent implements OnInit {
 
   try {
     if (this.authMode === 'login') {
-      // Effettua login con await su observable convertito in Promise
+      
       const res = await firstValueFrom(this.userService.login(this.authEmail, this.authPassword));
       
       localStorage.setItem('token', res.token);
       this.isAuthenticated = true;
       this.userName = this.authEmail;
 
-      // Chiudi la modale solo dopo il successo
+      
       this.closeAuthModal();
 
     } else {
@@ -207,16 +207,16 @@ export class AppComponent implements OnInit {
     }
   }
 }
-  // Modifica il metodo logout esistente per chiudere il dropdown
-logout(): void {
-  this.isAuthenticated = false;
-  this.userName = '';
-  this.userInitial = '';
-  this.authEmail = '';
-  this.showUserDropdown = false;
-  this.myDocs = [];
-  localStorage.removeItem('token');
-}
+  
+  logout(): void {
+    this.isAuthenticated = false;
+    this.userName = '';
+    this.userInitial = '';
+    this.authEmail = '';
+    this.showUserDropdown = false;
+    this.myDocs = [];
+    localStorage.removeItem('token');
+  }
 
   checkAuth() {
     this.isAuthenticated = false;
@@ -224,7 +224,7 @@ logout(): void {
     this.userInitial = '';
   }
 
-  // Modifica il metodo getPublications esistente per ricaricare anche myDocs se necessario
+  
   getPublications(): void {
     this.publicationService.getPublications().subscribe(
       (response) => {
@@ -235,7 +235,7 @@ logout(): void {
         }));
         this.filteredDocs = [...this.docs];
         
-        // Se il dropdown è aperto, ricarica anche le pubblicazioni dell'utente
+        
         if (this.showUserDropdown && this.isAuthenticated) {
           this.loadMyDocs();
         }
@@ -247,74 +247,74 @@ logout(): void {
   }
 
   onUpload(): void {
-  const file = this.fileInput.nativeElement.files?.[0];
-  if (!file) {
-    alert('Devi selezionare un file');
-    return;
-  }
-  const metadata = {
-    title: this.uploadForm.value.title,
-    authors: this.uploadForm.value.authors,
-    year: this.uploadForm.value.year,
-    paper: this.uploadForm.value.paper,
-    keywords: Array.from(this.selectedKeywords),
-    useRake: this.useRake  // <-- aggiunto
-  };
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-  formData.append('email', this.userName);
-
-  this.publicationService.uploadDocument(formData).subscribe(
-    (newDoc) => {
-      const docWithToggle: Document = {
-        ...newDoc,
-        keywords: newDoc.keywords || [],
-        showAllKeywords: false
-      };
-      this.docs.push(docWithToggle);
-      this.filteredDocs = [...this.docs];
-      this.uploadForm.reset({ year: new Date().getFullYear() });
-      this.fileInput.nativeElement.value = '';
-      this.selectedKeywords.clear();
-      this.extractedKeywords = [];
-      this.showKeywordPanel = false;
-      this.showSuccessPopup = true;
-      setTimeout(() => (this.showSuccessPopup = false), 3000);
-    },
-    () => alert('Errore durante il caricamento')
-  );
-}
-
-  // BibTeX - Estrazione e gestione keyword
-  async onBibtexDocFileSelected(event: any) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  this.isExtractingBibtexKeywords = true;
-  this.bibtexKeywordError = '';
-  this.extractedBibtexKeywords = [];
-  this.selectedBibtexKeywords.clear();
-  this.showBibtexKeywordPanel = false;
-
-  try {
+    const file = this.fileInput.nativeElement.files?.[0];
+    if (!file) {
+      alert('Devi selezionare un file');
+      return;
+    }
+    const metadata = {
+      title: this.uploadForm.value.title,
+      authors: this.uploadForm.value.authors,
+      year: this.uploadForm.value.year,
+      paper: this.uploadForm.value.paper,
+      keywords: Array.from(this.selectedKeywords),
+      useRake: this.useRake  // <-- aggiunto
+    };
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('useRake', String(this.useRakeBibtex));  // <-- flag tecnologia
+    formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+    formData.append('email', this.userName);
 
-    const keywords = await firstValueFrom(this.publicationService.extractKeywords(formData));
-    this.extractedBibtexKeywords = keywords;
-    keywords.forEach(k => this.selectedBibtexKeywords.add(k));
-    this.showBibtexKeywordPanel = true;
-  } catch (err) {
-    this.bibtexKeywordError = "Errore durante l'estrazione delle keyword";
+    this.publicationService.uploadDocument(formData).subscribe(
+      (newDoc) => {
+        const docWithToggle: Document = {
+          ...newDoc,
+          keywords: newDoc.keywords || [],
+          showAllKeywords: false
+        };
+        this.docs.push(docWithToggle);
+        this.filteredDocs = [...this.docs];
+        this.uploadForm.reset({ year: new Date().getFullYear() });
+        this.fileInput.nativeElement.value = '';
+        this.selectedKeywords.clear();
+        this.extractedKeywords = [];
+        this.showKeywordPanel = false;
+        this.showSuccessPopup = true;
+        setTimeout(() => (this.showSuccessPopup = false), 3000);
+      },
+      () => alert('Errore durante il caricamento')
+    );
+  }
+
+  
+  async onBibtexDocFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    this.isExtractingBibtexKeywords = true;
+    this.bibtexKeywordError = '';
     this.extractedBibtexKeywords = [];
     this.selectedBibtexKeywords.clear();
     this.showBibtexKeywordPanel = false;
-  } finally {
-    this.isExtractingBibtexKeywords = false;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('useRake', String(this.useRakeBibtex));  // <-- flag tecnologia
+
+      const keywords = await firstValueFrom(this.publicationService.extractKeywords(formData));
+      this.extractedBibtexKeywords = keywords;
+      keywords.forEach(k => this.selectedBibtexKeywords.add(k));
+      this.showBibtexKeywordPanel = true;
+    } catch (err) {
+      this.bibtexKeywordError = "Errore durante l'estrazione delle keyword";
+      this.extractedBibtexKeywords = [];
+      this.selectedBibtexKeywords.clear();
+      this.showBibtexKeywordPanel = false;
+    } finally {
+      this.isExtractingBibtexKeywords = false;
+    }
   }
-}
 
   toggleBibtexKeyword(kw: string) {
     if (this.selectedBibtexKeywords.has(kw)) {
@@ -511,32 +511,6 @@ logout(): void {
       this.loadMyDocs();
     }
   }
-/*
-  loadMyDocs() {
-    const myEmail = this.authEmail || this.getEmailFromToken();
-    this.myDocs = this.docs.filter(d => d.owner?.email === myEmail);
-  }
-
-  deleteMyDoc(id: number) {
-    const token = this.authService.getToken();
-    if (!token) {
-      alert("Non autenticato!");
-      return;
-    }
-    if (!confirm('Sicuro di voler eliminare questa pubblicazione?')) return;
-    this.publicationService.deletePublication(id).subscribe({
-      next: () => {
-        this.myDocs = this.myDocs.filter(d => d.id !== id);
-        this.docs = this.docs.filter(d => d.id !== id);
-        this.filteredDocs = this.filteredDocs.filter(d => d.id !== id);
-        alert('Pubblicazione eliminata con successo!');
-      },
-      error: err => {
-        alert('Errore durante la cancellazione: ' + (err.error?.message || ''));
-      }
-    });
-  }
-    */
 
   getEmailFromToken(): string {
     const token = this.authService.getToken();
@@ -548,25 +522,24 @@ logout(): void {
       return '';
     }
   }
-  // Gestione dropdown utente
-toggleUserDropdown(): void {
-  this.showUserDropdown = !this.showUserDropdown;
-  if (this.showUserDropdown && this.isAuthenticated) {
-    this.loadMyDocs();
-  }
-  
-  // Chiudi il dropdown quando si clicca fuori
-  if (this.showUserDropdown) {
-    setTimeout(() => {
-      document.addEventListener('click', this.closeDropdownOnOutsideClick.bind(this));
-    }, 0);
-  }
-}
 
-closeUserDropdown(): void {
-  this.showUserDropdown = false;
-  document.removeEventListener('click', this.closeDropdownOnOutsideClick.bind(this));
-}
+  toggleUserDropdown(): void {
+    this.showUserDropdown = !this.showUserDropdown;
+    if (this.showUserDropdown && this.isAuthenticated) {
+      this.loadMyDocs();
+    }
+    
+    if (this.showUserDropdown) {
+      setTimeout(() => {
+        document.addEventListener('click', this.closeDropdownOnOutsideClick.bind(this));
+      }, 0);
+    }
+  }
+
+  closeUserDropdown(): void {
+    this.showUserDropdown = false;
+    document.removeEventListener('click', this.closeDropdownOnOutsideClick.bind(this));
+  }
 
 private closeDropdownOnOutsideClick(event: Event): void {
   const target = event.target as HTMLElement;
@@ -583,7 +556,7 @@ loadMyDocs(): void {
   this.loadingMyDocs = true;
   const userEmail = this.getUserEmail();
   
-  // Filtra i documenti dell'utente corrente
+  
   this.myDocs = this.docs.filter(doc => {
     return doc.owner?.email === userEmail;
   });
@@ -591,14 +564,13 @@ loadMyDocs(): void {
   this.loadingMyDocs = false;
 }
 
-// Ottieni l'email dell'utente corrente
 private getUserEmail(): string {
-  // Se disponibile nell'authEmail
+  
   if (this.authEmail) {
     return this.authEmail;
   }
   
-  // Altrimenti cerca di estrarlo dal token
+  
   const token = localStorage.getItem('token');
   if (!token) return '';
   
@@ -610,7 +582,7 @@ private getUserEmail(): string {
   }
 }
 
-// Ottieni l'iniziale dell'utente per l'avatar
+
 getUserInitial(): string {
   if (this.userName) {
     return this.userName.charAt(0).toUpperCase();
@@ -620,40 +592,9 @@ getUserInitial(): string {
   }
   return 'U';
 }
-/*
-// Elimina una pubblicazione dell'utente
-deleteMyDoc(id: number): void {
-  if (!confirm('Sei sicuro di voler eliminare questa pubblicazione?')) {
-    return;
-  }
-
-  const token = localStorage.getItem('token');
-  if (!token) {
-    alert('Non autenticato!');
-    return;
-  }
-
-  this.publicationService.deletePublication(id).subscribe({
-    next: (response) => {
-      // Rimuovi il documento da tutte le liste
-      this.myDocs = this.myDocs.filter(d => d.id !== id);
-      this.docs = this.docs.filter(d => d.id !== id);
-      this.filteredDocs = this.filteredDocs.filter(d => d.id !== id);
-      
-      alert('Pubblicazione eliminata con successo!');
-    },
-    error: (err) => {
-      console.error('Errore durante la cancellazione:', err);
-      const errorMessage = err.error?.message || err.message || 'Errore durante la cancellazione';
-      alert('Errore: ' + errorMessage);
-    }
-  });
-}
-
-*/
 
 deleteMyDoc(id: number): void {
-  // Trova il documento da eliminare
+  
   this.docToDelete = this.myDocs.find(doc => doc.id === id) || null;
   
   if (!this.docToDelete) {
@@ -661,10 +602,8 @@ deleteMyDoc(id: number): void {
     return;
   }
 
-  // Mostra il popup di conferma
   this.showDeleteConfirmPopup = true;
 }
-// Gestione popup di conferma
 confirmDelete(): void {
   if (!this.docToDelete) return;
 
@@ -677,17 +616,16 @@ confirmDelete(): void {
 
   this.publicationService.deletePublication(this.docToDelete.id).subscribe({
     next: (response) => {
-      // Rimuovi il documento da tutte le liste
       const docId = this.docToDelete!.id;
       this.myDocs = this.myDocs.filter(d => d.id !== docId);
       this.docs = this.docs.filter(d => d.id !== docId);
       this.filteredDocs = this.filteredDocs.filter(d => d.id !== docId);
       
-      // Mostra popup di successo
+
       this.showDeleteSuccessPopup = true;
       setTimeout(() => this.showDeleteSuccessPopup = false, 3000);
       
-      // Chiudi popup di conferma
+
       this.showDeleteConfirmPopup = false;
       this.docToDelete = null;
     },
@@ -705,7 +643,6 @@ cancelDelete(): void {
   this.docToDelete = null;
 }
 
-// Metodo per mostrare errori
 private showError(message: string): void {
   this.errorMessage = message;
   this.showErrorPopup = true;

@@ -10,5 +10,5 @@ export interface Document {
   fileUrl: string;
   keywords: Array<string>;
   useRake: boolean;
-  showAllKeywords?: boolean; // Proprietà aggiunta per il toggle
+  showAllKeywords?: boolean; 
 }

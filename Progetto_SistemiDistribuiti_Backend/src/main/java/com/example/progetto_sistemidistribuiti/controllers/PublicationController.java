@@ -67,8 +67,6 @@ public class PublicationController {
     }
 
 
-
-
     @RolesAllowed("user")
     @PostMapping(path = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Document> upload(
@@ -77,17 +75,15 @@ public class PublicationController {
             @RequestPart(value = "bibtex", required = false) MultipartFile bibtex,
             @RequestPart String email
     ) throws Exception {
-        // Recupera il profilo utente tramite email
-        UserProfile user = userService.getUserByEmail(email);
-        String nome = user.getFullName(); // O getNome() se il campo si chiama così
 
+        UserProfile user = userService.getUserByEmail(email);
+        String nome = user.getFullName();
         dto.setFile(file);
         dto.setBibtex(bibtex);
 
         Document saved = service.ingest(dto, nome, email);
         return ResponseEntity.ok(saved);
     }
-
 
 
     @GetMapping("/search")
@@ -149,7 +145,7 @@ public class PublicationController {
 
     private String extractBucket(String s3Url) throws URISyntaxException {
         URI uri = new URI(s3Url);
-        String host = uri.getHost(); // e.g. "mybucket.s3.us-east-1.amazonaws.com"
+        String host = uri.getHost();
         return host.substring(0, host.indexOf('.'));
     }
 
@@ -168,7 +164,6 @@ public class PublicationController {
             @PathVariable Integer id,
             JwtAuthenticationToken token) {
 
-        // Ottieni l'email dell'utente loggato dal JWT
         String loggedEmail = token.getTokenAttributes().get("email").toString();
 
         Optional<Document> docOpt = service.searchById(id);
@@ -177,13 +172,12 @@ public class PublicationController {
         }
 
         Document doc = docOpt.get();
-        // Controlla se il documento ha un proprietario e confronta le email
         if (doc.getOwner() == null || !doc.getOwner().getEmail().equalsIgnoreCase(loggedEmail)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body("Non puoi eliminare una pubblicazione inserita da un altro utente.");
         }
 
-        // Elimina da S3 (se serve)
+        // Elimina da S3
         if (doc.getFileUrl() != null && !doc.getFileUrl().isEmpty()) {
             try {
                 String bucket = extractBucket(doc.getFileUrl());

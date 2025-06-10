@@ -43,7 +43,7 @@ public class Document {
     private String fileUrl;
 
     @Field(type = FieldType.Text)
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "document_keywords", joinColumns = @JoinColumn(name = "document_id"))
     @Column(name = "keyword")
     private List<String> keywords;

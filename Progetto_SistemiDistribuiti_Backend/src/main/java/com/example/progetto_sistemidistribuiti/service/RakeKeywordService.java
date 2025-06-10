@@ -60,9 +60,9 @@ public class RakeKeywordService {
             return Arrays.stream(result.getFullKeywords())
                     .map(String::trim)
                     .filter(this::isKeywordValid)
-                    .filter(this::isNotStopWordsPhrase)  // FILTRO STOP WORDS
+                    .filter(this::isNotStopWordsPhrase)
                     .distinct()
-                    .limit(15)                          // massimo 15 keyword
+                    .limit(5)
                     .toList();
         } catch (Exception e) {
             e.printStackTrace();

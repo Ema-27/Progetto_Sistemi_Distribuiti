@@ -3,13 +3,15 @@ import { Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 import { Document } from "../model/document";
 import { UserRegistration } from "../model/user-registration";
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PublicationService {
-  private apiUrl = 'http://localhost:8080/api/publications';
-  private userApiUrl = 'http://localhost:8080/api/users'; // ✅ nuova base URL per utenti
+  private apiUrl = 'http://'+environment.host+':8080/api/publications';
+
+  private userApiUrl = 'http://'+environment.host+':8080/api/users'; 
 
   constructor(private http: HttpClient) {}
 
@@ -54,7 +56,6 @@ export class PublicationService {
   
 
   extractKeywords(formData: FormData): Observable<string[]> {
-    // Non serve auth qui, ma puoi aggiungerla se necessario
     return this.http.post<string[]>(`${this.apiUrl}/extract-keywords`, formData);
   }
 }
