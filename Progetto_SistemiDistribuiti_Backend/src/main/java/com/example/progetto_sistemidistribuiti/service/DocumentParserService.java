@@ -27,9 +27,11 @@ public class DocumentParserService {
     private static final Pattern LATEX_ENVIRONMENT_PATTERN = Pattern.compile("\\\\begin\\{[^\\}]*\\}.*?\\\\end\\{[^\\}]*\\}", Pattern.DOTALL);
 
     public String extractText(MultipartFile file) throws Exception {
+        String filename = file.getOriginalFilename();
+        if(filename.endsWith(".tex") || filename.endsWith(".latex"))
+            return extractLatexText(file);
         String text = extractWithTika(file);
         if (text == null || text.isBlank()) {
-            String filename = file.getOriginalFilename();
             if (filename != null && filename.endsWith(".pdf")) {
                 System.out.println("[FALLBACK] PDF vuoto da Tika, provo PDFBox");
                 return extractWithPDFBox(file);
