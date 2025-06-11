@@ -12,12 +12,12 @@ PubliSisDIS è un’applicazione web moderna che ti permette di organizzare, cat
 - **Parsing automatico BibTeX**: estrazione metadati da file .bib
 - **Validazione e conversione**: controllo del contenuto e conversione text extraction
 
-  ### 🤖 **Estrazione Avanzata di Keyword**
+### 🤖 **Estrazione Avanzata di Keyword**
 - **Amazon Comprehend**: rilevamento automatico della lingua e estrazione di key-phrases multi-lingua
 - **RAKE Algorithm**: alternativa open-source per estrazione da testi in inglese
 - **Filtro stop-words**: pulizia del “rumore” dai risultati
 
-  ### 📋 **Anteprima e Modifica Keywords**
+### 📋 **Anteprima e Modifica Keywords**
 - **Report interattivo**: visualizza le keyword estratte prima della pubblicazione
 - **Editing manualei**: aggiungi o rimuovi keyword secondo le tue preferenze
 
