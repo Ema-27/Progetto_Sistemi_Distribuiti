@@ -1,6 +1,6 @@
 # PubliSisDis 📚
 
-**La piattaforma per gestire le tue pubblicazioni ** 
+**La piattaforma per gestire le tue pubblicazioni** 
 
 PublisisDIS è un’applicazione web moderna che ti permette di organizzare, catalogare e ricercare facilmente le tue pubblicazioni scientifiche. Grazie all’integrazione con servizi cloud AWS e a potenti algoritmi di Natural Language Processing, caricare, analizzare e gestire documenti in PDF, DOCX o LaTeX non è mai stato così semplice!
 ---
@@ -50,12 +50,12 @@ PublisisDIS è un’applicazione web moderna che ti permette di organizzare, cat
 
 ### Cloud & DevOps ☁️
 - **Amazon Web Services**
-  --Cognito (autenticazione)
-  --S3 (object storage)
-  --IAM (gestione credenziali e permessi)
-  --RDS MySQL (database)
-  --Comprehend (NLP)
-  --EC2 (hosting)
+  -Cognito (autenticazione)
+  -S3 (object storage)
+  -IAM (gestione credenziali e permessi)
+  -RDS MySQL (database)
+  -Comprehend (NLP)
+  -EC2 (hosting)
   
 ---
 
