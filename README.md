@@ -47,15 +47,16 @@ PubliSisDIS è un’applicazione web moderna che ti permette di organizzare, cat
 - **Spring Boot & Java 17**
 - **Layered Architecture**
 - **AWS SDK Integration**
+  
 
 ### Cloud & DevOps ☁️
 - **Amazon Web Services**
-  -Cognito (autenticazione)
-  -S3 (object storage)
-  -IAM (gestione credenziali e permessi)
-  -RDS MySQL (database)
-  -Comprehend (NLP)
-  -EC2 (hosting)
+  - Cognito (autenticazione)
+  - S3 (object storage)
+  - IAM (gestione credenziali e permessi)
+  - RDS MySQL (database)
+  - Comprehend (NLP)
+  - EC2 (hosting)
   
 ---
 
