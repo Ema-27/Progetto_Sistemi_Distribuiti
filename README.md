@@ -73,3 +73,7 @@ PubliSisDIS è un’applicazione web moderna che ti permette di organizzare, cat
 
 ---
 
+## 📄 License
+
+This project is released under the MIT license. See the `LICENSE` file for details.
+
